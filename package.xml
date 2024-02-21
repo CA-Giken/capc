@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>capc</name>
+  <version>1.0.0</version>
+  <description>Cabinet PC utilities</description>
+
+  <maintainer email="ca-giken@c-able.ne.jp">CA-Giken</maintainer>
+  <license>BSD</license>
+  <url type="website">https://www.c-able.ne.jp/~hirai551</url>
+  <author email="ca-giken@c-able.ne.jp">CA-Giken</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>serial</buildtool_depend>
+</package>
