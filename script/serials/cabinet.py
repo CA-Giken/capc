@@ -9,11 +9,12 @@ __SERIAL_NAME__ = "Arduino cabinet monitor"
 
 """ キャビネット監視用Arduino通信管理クラス
 """
+
 class Cabinet_serial:
   def __init__(self, config):
     self.config = config
-    self.is_alive = False
     self.temperature = 0 # 内部温度
+    self.is_alive = False
     self.__error = {
       "shutdowner": False # Falseはエラー状態とする
     }
@@ -44,20 +45,22 @@ class Cabinet_serial:
   """
   def connect(self):
     print("[LOG] Connecting to " + __SERIAL_NAME__ + "...")
-    try:
-      self.serial = serial.Serial(
-        port=self.config["dev_cab"],
-        baudrate=self.config["baudrate"],
-        timeout=self.config["timeout"]
-      )
-      if(self.serial.is_open == False):
-        self.serial.open()
-      self.is_alive = True
-      print("[LOG] Success to connect to " + __SERIAL_NAME__)
-    except Exception as e:
-      self.is_alive = False
-      print("[LOGError] Failed to connect to " + __SERIAL_NAME__)
-      print(e)
+    for dev in self.config["dev_cab"]:
+      try:
+        self.serial = serial.Serial(
+          port=dev,
+          baudrate=self.config["baudrate"],
+          timeout=self.config["timeout"]
+        )
+        if(self.serial.is_open == False):
+          self.serial.open()
+        self.is_alive = True
+        print("[LOG] Success to connect to " + __SERIAL_NAME__)
+        break
+      except Exception as e:
+        self.is_alive = False
+        print("[LOGError] Failed to connect to " + __SERIAL_NAME__)
+        print(e)
       
   """ シリアル接続解除
   """
@@ -68,30 +71,18 @@ class Cabinet_serial:
   
   """ 温度取得
   """
-  def get_temperature(self):
+  def get_value(self,key):
     if self.is_alive == True:
       # シリアルから送られてきたデータの最終行を取得
-      lines = []
-      while True:
-          line = self.serial.readline()
-          lines.append(line.decode('utf-8').rstrip())
-
-          # wait for new data after each line
-          timeout = time.time() + 0.1
-          while not self.serial.inWaiting() and timeout > time.time():
-              pass
-          if not self.serial.inWaiting():
-              break 
-      # シリアル通信が来ない場合に例外処理を行う
-      if len(lines) == 0:
-        print("[LOG] No data has been sent from " + __SERIAL_NAME__)
-        return 0
-      lastline = lines[-1]
-      self.temperature = float(lastline.replace("inner_temp=", ""))
-      return self.temperature
+      line = self.serial.readline().decode('utf-8').rstrip()
+      if key in line and "=" in line:
+        exec("global "+key+";"+line)
+        return eval(key)
+      else:
+        return None
     else:
       print("[LOG] Please connect first.")
-      return 0
+      return None
   
   """ バッテリー残量低下
   """

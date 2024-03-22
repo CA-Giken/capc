@@ -1,7 +1,6 @@
 <launch>
-  <node pkg="capc" type="talker.py" name="talker" output="screen">
+  <node pkg="capc" type="talker.py" name="talker" output="screen" respawn="true">
     <param name="/config/watchdog/dev_ups" type="str" value="/dev/ttyUSB0" />
   </node>
-  <node name="listener" pkg="capc" type="listener.py" output="screen"/>
 </launch>
 

@@ -10,7 +10,7 @@ class main():
     # Config loader
     try:
       self.config = {
-        "dev_cab": "/dev/ttyACM0",
+        "dev_cab": ["/dev/ttyACM0","/dev/ttyACM1","/dev/ttyACM2"],
         "dev_ups": "/dev/ttyUSB0",
         "baudrate": 9600,
         "timeout": 1 # 秒？ミリ秒？
@@ -27,11 +27,13 @@ class main():
   """Publisher用メソッド
   """
   def cb_cyclic(self, ev):
-    print("watchdog::cyclic call back")
-    t1=Float()
-    t1.data = self.cabinet.get_temperature()
-    self.pub.publish(t1)
-    rospy.set_param("/watchdog/inner_temp",t1.data)
+    while(True):
+      t = self.cabinet.get_value("inner_temp")
+      if t is not None:
+        t1=Float()
+        t1.data = t
+        self.pub.publish(t1)
+        rospy.set_param("/watchdog/inner_temp",t1.data)
 
   """Talker立ち上げ用メソッド
   """
@@ -42,11 +44,9 @@ class main():
     self.cabinet.connect()
     self.ups.connect()
     
-    rospy.Timer(rospy.Duration(2), self.cb_cyclic)
+    rospy.Timer(rospy.Duration(2), self.cb_cyclic, oneshot=True)
 
     while not rospy.is_shutdown():
-      print("watchdog::main loop")
-
       # シリアル通信の再接続処理
       try:
         if self.cabinet.is_alive == False:
@@ -83,4 +83,5 @@ class main():
 if __name__ == '__main__':
   try:
     main()
-  except rospy.ROSInterruptException: pass
+  except rospy.ROSInterruptException:
+    pass

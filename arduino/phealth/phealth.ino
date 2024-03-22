@@ -21,6 +21,7 @@
 float temp=0;
 int battery=0;
 long ts_recv=0;  //timestamp when  recieved string via Serial
+long wdt=0;  //elapsed time since the last recieve event
 
 rtos::Thread th_recv;
 
@@ -30,11 +31,15 @@ void sampler(){
   float volt=VCAL*aval/DCAL;
   float t=(volt-TEMP_ZERO)/TEMP_CAL;
   temp=temp+(t-temp)*0.1;
-  setTimeout.set(sampler,100);
+  setTimeout.set(sampler,200);
 }
 void logger(){
   Serial.print("inner_temp=");
   Serial.println(temp);
+  Serial.print("battery=");
+  Serial.println(battery);
+  Serial.print("wdt=");
+  Serial.println(wdt);
   setTimeout.set(logger,1000);
 }
 
@@ -67,12 +72,12 @@ void UPS_scan(){
 }
 
 void RUN_scan(){
-  long dt=millis()-ts_recv;
-  if(dt>5000){
+  wdt=millis()-ts_recv;
+  if(wdt>5000){
     digitalWrite(RUN_LAMP,HIGH);
     digitalWrite(TEMP_LAMP,HIGH);
     setTimeout.set([]{
-      digitalWrite(RUN _LAMP,LOW);
+      digitalWrite(RUN_LAMP,LOW);
       digitalWrite(TEMP_LAMP,LOW);
     },30);
     setTimeout.set(RUN_scan,200);
@@ -91,16 +96,21 @@ void setup() {
   pinMode(TEMP_ENABLE,OUTPUT);
   pinMode(TEMP_GND,OUTPUT);
   digitalWrite(TEMP_LAMP,HIGH);
+  delay(2000);
+  digitalWrite(TEMP_LAMP,LOW);
   pinMode(RUN_LAMP,OUTPUT);
   digitalWrite(RUN_LAMP,HIGH);
+  delay(2000);
+  digitalWrite(RUN_LAMP,LOW);
   pinMode(UPS_LAMP,OUTPUT);
   digitalWrite(UPS_LAMP,HIGH);
-
+  delay(2000);
+  digitalWrite(UPS_LAMP,LOW);
   setTimeout.set([](){
     RUN_scan();
     UPS_scan();
     TEMP_scan();
-  },10000);
+  },2000);
 
   logger();
   sampler();
@@ -118,6 +128,11 @@ void setup() {
     }
   }));
   ts_recv=millis();
+
+  NRF_WDT->CONFIG=0x01;     // Configure WDT to run when CPU is asleep
+  NRF_WDT->CRV=3276L*3;      // Timeout[s] = (CRV-1)/32768
+  NRF_WDT->RREN=0x01;       // Enable the RR[0] reload register
+  NRF_WDT->TASKS_START=1;   // Start WDT
 }
 
 int split(String data, char delimiter, String *dst){
@@ -138,4 +153,5 @@ int split(String data, char delimiter, String *dst){
 void loop() {
   setTimeout.spinOnce();
   delay(10);
+  NRF_WDT->RR[0]=WDT_RR_RR_Reload;
 }
