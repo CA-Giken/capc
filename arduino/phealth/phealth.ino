@@ -1,5 +1,6 @@
-#include <Arduino.h>
 #include <SetTimeout.h>
+
+#include <Arduino.h>
 #include <mbed.h>
 #include <rtos.h>
 
@@ -11,7 +12,7 @@
 #define TEMP_ENABLE D0
 #define TEMP_GND D2
 #define TEMP_CAL 0.01  //V/deg
-#define TEMP_ZERO 0.6  // V at zero
+#define TEMP_ZERO 0.6  //nominal voltage at zero degree
 #define TEMP_THRES 40
 
 #define TEMP_LAMP D9
@@ -20,6 +21,7 @@
 
 float temp=0;
 int battery=0;
+int temp_zcal=2.0;
 long ts_recv=0;  //timestamp when  recieved string via Serial
 long wdt=0;  //elapsed time since the last recieve event
 
@@ -29,17 +31,17 @@ void sampler(){
   digitalWrite(TEMP_ENABLE,HIGH);
   int aval=analogRead(TEMP_SENS);
   float volt=VCAL*aval/DCAL;
-  float t=(volt-TEMP_ZERO)/TEMP_CAL;
+  float t=(volt-TEMP_ZERO)/TEMP_CAL-temp_zcal;
   temp=temp+(t-temp)*0.1;
   setTimeout.set(sampler,200);
 }
 void logger(){
   Serial.print("inner_temp=");
   Serial.println(temp);
+  Serial.print("temp_zcal=");
+  Serial.println(temp_zcal);
   Serial.print("battery=");
   Serial.println(battery);
-  Serial.print("wdt=");
-  Serial.println(wdt);
   setTimeout.set(logger,1000);
 }
 
@@ -75,24 +77,23 @@ void RUN_scan(){
   wdt=millis()-ts_recv;
   if(wdt>5000){
     digitalWrite(RUN_LAMP,HIGH);
-    digitalWrite(TEMP_LAMP,HIGH);
     setTimeout.set([]{
       digitalWrite(RUN_LAMP,LOW);
-      digitalWrite(TEMP_LAMP,LOW);
     },30);
     setTimeout.set(RUN_scan,200);
   }
   else{
     digitalWrite(RUN_LAMP,HIGH);
-    setTimeout.set([]{
-      digitalWrite(RUN_LAMP,LOW);
-    },333);
+//    setTimeout.set([]{
+//      digitalWrite(RUN_LAMP,LOW);
+//    },333);
     setTimeout.set(RUN_scan,1000);
   }
 }
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("pHealth::setup");
   pinMode(TEMP_ENABLE,OUTPUT);
   pinMode(TEMP_GND,OUTPUT);
   digitalWrite(TEMP_LAMP,HIGH);
