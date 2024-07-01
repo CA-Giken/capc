@@ -1,17 +1,31 @@
-# CAPCサポートツール
-キャビネットPC**CAPC**用のツール。以下のバリエーションがあります。
+# CAPC サポートツール
 
-## RAS・UPSソフトウェア
-1. ROS版  
+キャビネット PC**CAPC**用のツール。以下のバリエーションがあります。
+
+## RAS・UPS ソフトウェア
+
+1. ROS 版
+
 - Noetic(Python3)
-2. Windows版
-- Python3
-3. Linux版
+
+2. Windows 版
+
 - Python3
 
-## RAS基板用ファームウェア
+3. Linux 版
+
+- Python3
+
+## RAS 基板用ファームウェア
+
 1. Seeed Xiao BLE
 
 ## RASUPS
-### ROS版使用法
 
+### ROS 版使用法
+
+## インストール
+
+```sh
+pip install git+https://github.com/CA-Giken/capc-host
+```

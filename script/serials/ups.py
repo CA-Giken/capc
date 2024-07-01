@@ -3,6 +3,7 @@
 import serial
 from serial.tools import list_ports
 import subprocess
+from capc_host import client
 
 __SERIAL_NAME__ = "UPS power unit"
 
@@ -68,7 +69,7 @@ class Ups_serial:
   def shutdown(self):
     try:
       print("[LOG] Shutdowning...")
-      subprocess.call(["shutdown", "-h", "now"]) # FIXME: 動いていない？ROSからPCシャットダウンリクエストはどう送る？
+      client.request_shutdown()
     except:
       return False
     
